@@ -1,0 +1,25 @@
+{
+  "name": "netspider",
+  "version": "1.0.0",
+  "description": "a net spider fetch second hands car info from net site",
+  "main": "index.js",
+  "bin": { "netspider": "bin/netspider.js" },
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcriori/netspider.git"
+  },
+  "keywords": [
+    "netspider",
+    "nodejs",
+    "commander"
+  ],
+  "author": "dcriori",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dcriori/netspider/issues"
+  },
+  "homepage": "https://github.com/dcriori/netspider#readme"
+}
