@@ -2,6 +2,7 @@
 
 var program = require('commander');
 var request = require('superagent');
+var chalk = require('chalk');
 
 program
     .version('0.0.1')
@@ -25,10 +26,22 @@ if(!program.args.length) {
 	      // console.log(JSON.stringify(res.body));
 	      var items = res.body.items;
 	      items.forEach(function(item){
-	      		console.log('id: '+item.id+'\n\rname: ' + item.name+'\n\rdesc: '+item.description+'\n\rsite: '+item.html_url+'\n\rstars:'+item.stargazers_count+'\n\r');
-	      })
+	      	// console.log('id: '+item.id 
+	      	// 		+'\n\rname: ' + item.name 
+	      	// 		+'\n\rdesc: '+item.description
+	      	// 		+'\n\rsite: '+item.html_url
+	      	// 		+'\n\rstars:'+item.stargazers_count 
+	      	// 		+'\n\r');
+	      	console.log(chalk.cyan.bold.underline('Name: ' + item.name));
+	        console.log(chalk.magenta.bold('Owner: ' + item.stargazers_count));
+	        console.log(chalk.grey('Desc: ' + item.description + '\n'));
+	        console.log(chalk.grey('Clone url: ' + item.clone_url + '\n'));
+	      });
+
+	    
+
 	    } else {
-	      console.log('Oh no! error ' + res.text);
+	      	console.log('Oh no! error ' + res.text);
 	    }
 	});
 }
