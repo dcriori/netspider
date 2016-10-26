@@ -224,20 +224,103 @@ function fetchDetailData(page_urls){
             var jsonData = [];
 
             $('.list-item').each(function(idx,element){
+            	var arr = $(this).find('a');
+
+            	var prr = $(this).find('p');
+            	var type = $(prr[0]).text();
+            	split_type(type);
+            	var info = $(prr[1]).text().replace(/\s+/g, "");
+            	
+            	console.log('>>>'+JSON.stringify(split_info(info)));
+
+            	var price = $(prr[2]).text().trim().replace(/\s+/g, "");
+            	var seller = $(this).find('span.seller').text();
+				var source_url = getValue($(arr[1]).attr('href'),'url');
+				var source = getValue($(arr[1]).attr('href'),'source');
+
+				// console.log('source_url = ' + source_url + '\n\rsource = ' + source);
 
             	jsonData.push({
-            		title: $(this).attr('title')
+            		title: $(this).attr('title'),
+            		type: split_type(type),
+            		info: split_info(info),
+            		price: price,
+            		seller: seller,
+            		source: source,
+            		source_url: source_url
             	});
             });
 
-            console.log("aim data is :"+JSON.stringify(jsonData));
-            callback(null,jsonData);
+            // console.log("aim data is :"+JSON.stringify(jsonData));
+            dbutil.saveMany(jsonData, 'tbl_detail_datas',function(result){
+            	callback(null,jsonData);	
+            });
             
-           
+            
         });
     },function(error,results){
         console.log("result :");
         console.log(results);    
     });
+}
 
+function split_info(info){
+
+// 2012年10月
+// 7.3万公里
+// 北京
+// 瓜子二手车
+
+	var arr = info.split('/');
+	
+	return {
+		date: arr[0],
+		kilometer: arr[1],
+		position: arr[2],
+		source: arr[3]
+	};
+}
+
+function split_type(type){
+
+	var arr = type.split(' ');
+	console.log(arr[0]);
+	console.log(arr[1]);
+	console.log(arr[2]);
+	console.log(arr[3]);
+	console.log(arr[4]);
+	console.log(arr[5]);
+	return {
+		type1: arr[0],
+		type2: arr[1],
+		type3: arr[2],
+		type4: arr[3],
+		type5: arr[4],
+		type6: arr[5],
+	};
+}
+
+function parseQueryString(str) {
+    var reg = /(([^?&=]+)(?:=([^?&=]*))*)/g;
+    var result = {};
+    var match;
+    var key;
+    var value;
+    while (match = reg.exec(str)) {
+        key = match[2];
+        value = match[3] || '';
+        result[key] = decodeURIComponent(value);
+    }
+    return result;
+}
+
+function getValue(url, name) {
+	var reg = new RegExp('(\\?|&)' + name + '=([^&?]*)', 'i');
+	var arr = url.match(reg);
+
+	if (arr) {
+		return arr[2];
+	}
+
+	return null;
 }
