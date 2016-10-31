@@ -14,6 +14,8 @@ var log4js = require("log4js");
 var log4js_config = require("./log_config.json");
 log4js.configure(log4js_config);
 
+var lg = log4js.getLogger('che300_loginfo');  
+
 
 var url_main = 'http://www.che300.com/';
 var url_series = 'http://meta.che300.com/meta/series/series_brand${brand_id}.json?v=1475147550';
@@ -125,7 +127,7 @@ exports.fetchCitys = function(callback){
 		    var province = '热门地区';
 		    //处理热门城市
 		    $('.city_hot_content').map(function(idx,element){
-		    	console.log('>>>'+ $(this).find('a').text());
+		    	// console.log('>>>'+ $(this).find('a').text());
 		    	var city_id = $(this).find('.cityItem').attr('data-id');
 
 		    	$(this).find('a').map(function(idx,element){
@@ -139,7 +141,6 @@ exports.fetchCitys = function(callback){
 		    		});
 		    		resolve(citys);
 		    	});
-		    	
 		    });
 
 		    //处理省市
@@ -174,21 +175,14 @@ exports.fetchCitys = function(callback){
 exports.fetchData = function(callback){
 	console.log("log_start start!");
 
-	var LogFile = log4js.getLogger('che300_log');
-
-	// LogFile.trace('This is a Log4js-Test');
-	// LogFile.debug('We Write Logs with log4js');
-	// LogFile.info('You can find logs-files in the log-dir');
-	// LogFile.warn('log-dir is a configuration-item in the log4js.json');
-	// LogFile.error('In This Test log-dir is : \'./logs/log_test/\'');
-
 	//先取出热门地区
-	dbutil.queryData('tbl_che300_citys',{province:'热门地区'},function(err, result){
+	dbutil.queryData('tbl_che300_citys',{province:'宁夏'},function(err, result){
 		var items = [];
 		result.forEach(function(item){
 			items.push(item);
 		});
-		console.log('>>>>>===<<<<<<' + JSON.stringify(items));
+
+		lg.info(JSON.stringify(items)); //加入日志
 		fetchCityData(items,callback);
 	});
 }
@@ -213,7 +207,7 @@ function fetchCityData(cityItems,callback){
 
 			if(err){
                 console.log("fetchCityData get \""+cityItem.link+"\" error !"+err);
-                // console.log("message info:"+JSON.stringify(mes));
+                lg.error("fetchCityData get \""+cityItem.link+"\" error !"+err);
             }
 		    var $ = cheerio.load(res.text);
 
@@ -236,19 +230,18 @@ function fetchCityData(cityItems,callback){
 			    	}
 			    	page_urls.push(url+'p='+p);
 			    }
-			    // callback(null,page_urls);
-			    fetchDetailData(page_urls,function(){
+		    }else{
+		    	page_urls.push(cityItem.link);
+		    }
+
+		    fetchDetailData(page_urls,function(){
 			    	callback();
 			    });
-		    }
 		});
 		
 	}, function(){
-
-		console.log('execute fetchCityData function ');
-
+		lg.info('execute fetchCityData function');
 		callback('done!');
-        
     });
 }
 
@@ -256,9 +249,11 @@ function fetchCityData(cityItems,callback){
 //获取车300的详细二手车辆信息
 function fetchDetailData(page_urls,callback){
 
-	async.mapLimit(page_urls,2,function(url,callback){
+	async.mapLimit(page_urls,2,function(url,done){
 		var fetchStart = new Date().getTime();	//抓取起始时间
-		// console.log('.......>>>>'+url);
+		
+		lg.info('开始获取'+url+'详细信息');
+
         superagent
     	.get(url)
         	.set('Host','www.che300.com')
@@ -292,12 +287,9 @@ function fetchDetailData(page_urls,callback){
 	            	var type = $(prr[0]).text();
 	            	split_type(type);
 	            	var info = $(prr[1]).text().replace(/\s+/g, "");
-	            	// console.log('>>>'+JSON.stringify(split_info(info)));
 
 	            	var price = $(prr[2]).text().trim().replace(/\s+/g, "");
 	            	var seller = $(this).find('span.seller').text();
-					
-					// console.log('source_url = ' + source_url + '\n\rsource = ' + source);
 
 	            	jsonData.push({
 	            		title: title,
@@ -314,7 +306,7 @@ function fetchDetailData(page_urls,callback){
 	            dbutil.saveMany(jsonData, 'tbl_che300_detail',function(result){
 	            	var time = new Date().getTime() - fetchStart;
 			        console.log('抓取' + url + '并入库成功', '，耗时' + time + '毫秒'); 
-	            	callback(null,jsonData);	
+	            	done(null,jsonData);	
 	            });
             }
         });
