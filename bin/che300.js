@@ -8,6 +8,12 @@ var superagent = require('superagent');
 var dbutil = require('./dbutil.js');
 var async = require('async');
 var URL = require('url');
+// var sleep = require('sleep');sleep
+
+var log4js = require("log4js");
+var log4js_config = require("./log_config.json");
+log4js.configure(log4js_config);
+
 
 var url_main = 'http://www.che300.com/';
 var url_series = 'http://meta.che300.com/meta/series/series_brand${brand_id}.json?v=1475147550';
@@ -99,10 +105,20 @@ exports.fetchSeries = function(brands,callback){
 exports.fetchCitys = function(callback){
 	dbutil.dropTable('tbl_che300_citys');
 	var promise = new Promise(function (resolve, reject) {
-		superagent.get(url_city).end(function (err, res) {
+		superagent
+		.get(url_city)
+			.set('Host','www.che300.com')
+        	.set('Connection','keep-alive')
+        	.set('Cache-Control','max-age=0')
+        	.set('Upgrade-Insecure-Requests','1')
+        	.set('User-Agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
+        	.set('Accept-Encoding','gzip, deflate, sdch')
+        	.set('Accept-Language','en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4')
+    	.timeout(3600*1000)
+    	.end(function (err, res) {
 			if (err) {
-		      console.error(err);
-		      reject(err);
+            	console.log("fetchCitys  get \""+url_city+"\" error !"+err);
+		    	reject(err);
 		    }
 
 		    var $ = cheerio.load(res.text);
@@ -151,116 +167,157 @@ exports.fetchCitys = function(callback){
         });
 
     },function(err){
-        console.log(err);
+        console.error(err);
     });
 }
 
 exports.fetchData = function(callback){
+	console.log("log_start start!");
+
+	var LogFile = log4js.getLogger('che300_log');
+
+	LogFile.trace('This is a Log4js-Test');
+	LogFile.debug('We Write Logs with log4js');
+	LogFile.info('You can find logs-files in the log-dir');
+	LogFile.warn('log-dir is a configuration-item in the log4js.json');
+	LogFile.error('In This Test log-dir is : \'./logs/log_test/\'');
+
 	//先取出热门地区
-	dbutil.queryData('tbl_che300_citys',{province:'热门地区'},function(err, result){
+	dbutil.queryData('tbl_che300_citys',{city_name:'南京'},function(err, result){
+		var items = [];
 		result.forEach(function(item){
-			fetchCityData(item);
+			items.push(item);
 		});
+		console.log('>>>>>===<<<<<<' + JSON.stringify(items));
+		fetchCityData(items,callback);
 	});
 }
 
-function fetchCityData(cityItem){
-	var promise = new Promise(function (resolve, reject) {
+function fetchCityData(cityItems,callback){
+	// var promise = new Promise(function (resolve, reject) {
+	
+	async.each(cityItems,function(cityItem,callback){
+		console.log(cityItem.city_name +':::'+ JSON.stringify(cityItem.link) +'.......');
 		var page_urls = [];
-		superagent.get(cityItem.link).end(function (err, res) {
-			if (err) {
-		      console.error(err);
-		      reject(err);
-		    }
+		superagent
+		.get(cityItem.link)
+			.set('Host','www.che300.com')
+        	.set('Connection','keep-alive')
+        	.set('Cache-Control','max-age=0')
+        	.set('Upgrade-Insecure-Requests','1')
+        	.set('User-Agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
+        	.set('Accept-Encoding','gzip, deflate, sdch')
+        	.set('Accept-Language','en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4')
+		.timeout(3600*1000)
+		.end(function (err, res) {
+
+			if(err){
+                console.log("fetchCityData get \""+cityItem.link+"\" error !"+err);
+                // console.log("message info:"+JSON.stringify(mes));
+            }
 		    var $ = cheerio.load(res.text);
 
 		    //获取随便一个翻页url
 		    var href = $('.pagination').find('a').last().attr('href');
-		    // console.log('=====>'+href);
-		    var p = URL.parse(href);
-		    // console.log('=====>'+p.query);
-		    // console.log('=====>'+href.replace(p.query,''));
-		    //把url的参数去掉
-		    var url = href.replace(p.query,'');
-		    
-		    var span = $('.pagination').find('span').text();
-		    var pages = parseInt(span.replace(/[^0-9]/ig,""));
-		    // console.log(cityItem.city_name+':'+ pages);
 
-		    for(var i=0; i<pages; i++){
-		    	if (i===0) {
-		    		p= '';
-		    	}else{
-		    		p = i*20;
-		    	}
-		    	page_urls.push(url+'p='+p);
+		    if(href !==undefined){
+			    var href_url = URL.parse(href);
+
+			    //把url的参数去掉
+			    var url = href.replace(href_url.query,'');
+			    var span = $('.pagination').find('span').text();
+			    var pages = parseInt(span.replace(/[^0-9]/ig,""));
+			    var p = '';
+			    for(var i=0; i<pages; i++){
+			    	if (i===0) {
+			    		p = '';
+			    	}else{
+			    		p = i*20;
+			    	}
+			    	page_urls.push(url+'p='+p);
+			    }
+			    // callback(null,page_urls);
+			    fetchDetailData(page_urls,callback);
 		    }
-		    resolve(page_urls);
 		});
-	});
+		
+	}, function(error,results){
 
-	promise.then(function(value){
+		console.log('execute fetchCityData function '+results);
 
-		fetchDetailData(value);
-
-	},function(err){
-		console.error(err);
-	});
+        callback();
+    });
 }
 
 
 //获取车300的详细二手车辆信息
-function fetchDetailData(page_urls){
-	async.mapLimit(page_urls,3,function(url,callback){
-        superagent.get(url).end(function(err,mes){
+function fetchDetailData(page_urls,callback){
+
+	async.map(page_urls,function(url,callback){
+		var fetchStart = new Date().getTime();	//抓取起始时间
+		console.log('.......>>>>'+url);
+        superagent
+    	.get(url)
+        	.set('Host','www.che300.com')
+        	.set('Connection','keep-alive')
+        	.set('Cache-Control','max-age=0')
+        	.set('Upgrade-Insecure-Requests','1')
+        	.set('User-Agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
+        	.set('Accept-Encoding','gzip, deflate, sdch')
+        	.set('Accept-Language','en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4')
+        .timeout(3600*1000)
+        .end(function(err,mes){
+            
             if(err){
                 console.log("get \""+url+"\" error !"+err);
-                console.log("message info:"+JSON.stringify(mes));
             }
-            console.log('fetch '+url+" succeful !");
-            //console.log("mess info:"+JSON.stringify(mes));
-            var $=cheerio.load(mes.text);
-
-            var jsonData = [];
-
-            $('.list-item').each(function(idx,element){
-            	var arr = $(this).find('a');
-
-            	var prr = $(this).find('p');
-            	var type = $(prr[0]).text();
-            	split_type(type);
-            	var info = $(prr[1]).text().replace(/\s+/g, "");
-            	
-            	console.log('>>>'+JSON.stringify(split_info(info)));
-
-            	var price = $(prr[2]).text().trim().replace(/\s+/g, "");
-            	var seller = $(this).find('span.seller').text();
-				var source_url = getValue($(arr[1]).attr('href'),'url');
-				var source = getValue($(arr[1]).attr('href'),'source');
-
-				// console.log('source_url = ' + source_url + '\n\rsource = ' + source);
-
-            	jsonData.push({
-            		title: $(this).attr('title'),
-            		type: split_type(type),
-            		info: split_info(info),
-            		price: price,
-            		seller: seller,
-            		source: source,
-            		source_url: source_url
-            	});
-            });
-
-            // console.log("aim data is :"+JSON.stringify(jsonData));
-            dbutil.saveMany(jsonData, 'tbl_detail_datas',function(result){
-            	callback(null,jsonData);	
-            });
             
-            
+            if(mes !== undefined) {
+	            var $=cheerio.load(mes.text);
+
+	            var jsonData = [];
+
+	            $('.list-item').each(function(idx,element){
+	            	var title = $(this).attr('title');
+	            	var arr = $(this).find('a');
+	            	var detail_item_url = $(arr[0]).attr('href');//取Iem的明细URL，取item detail 的 id
+	            	var detail_id =  detail_item_url.replace('http://www.che300.com/buycar/x','');
+	            	var source_url = getValue($(arr[1]).attr('href'),'url');
+					var source = getValue($(arr[1]).attr('href'),'source');
+
+	            	var prr = $(this).find('p');
+	            	var type = $(prr[0]).text();
+	            	split_type(type);
+	            	var info = $(prr[1]).text().replace(/\s+/g, "");
+	            	// console.log('>>>'+JSON.stringify(split_info(info)));
+
+	            	var price = $(prr[2]).text().trim().replace(/\s+/g, "");
+	            	var seller = $(this).find('span.seller').text();
+					
+					// console.log('source_url = ' + source_url + '\n\rsource = ' + source);
+
+	            	jsonData.push({
+	            		title: title,
+	            		detail_id: detail_id,
+	            		type: split_type(type),
+	            		info: split_info(info),
+	            		price: price,
+	            		seller: seller,
+	            		source: source,
+	            		source_url: source_url
+	            	});
+	            });
+	            
+	            dbutil.saveMany(jsonData, 'tbl_che300_detail',function(result){
+	            	var time = new Date().getTime() - fetchStart;
+			        console.log('抓取' + url + '并入库成功', '，耗时' + time + '毫秒'); 
+	            	callback(null,jsonData);	
+	            });
+            }
         });
     },function(error,results){
-        console.log("result :");
-        console.log(results);    
+        console.log("result :::::>>>"+results);
+        callback();
     });
 }
 
@@ -284,12 +341,6 @@ function split_info(info){
 function split_type(type){
 
 	var arr = type.split(' ');
-	console.log(arr[0]);
-	console.log(arr[1]);
-	console.log(arr[2]);
-	console.log(arr[3]);
-	console.log(arr[4]);
-	console.log(arr[5]);
 	return {
 		type1: arr[0],
 		type2: arr[1],
@@ -300,6 +351,8 @@ function split_type(type){
 	};
 }
 
+
+//此函数目前没用
 function parseQueryString(str) {
     var reg = /(([^?&=]+)(?:=([^?&=]*))*)/g;
     var result = {};
@@ -323,4 +376,11 @@ function getValue(url, name) {
 	}
 
 	return null;
+}
+
+function isURL(url){
+	var regexp = new RegExp('(http[s]{0,1}|ftp)://[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z]{2,4})(:\\d+)?(/[a-zA-Z0-9\\.\\-~!@#$%^&*+?:_/=<>]*)?', 'gi');
+	var urls = url.match(regexp) || [];
+	console.log(urls);
+	return urls;
 }

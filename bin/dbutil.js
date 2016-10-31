@@ -36,11 +36,15 @@ DBUtil.prototype.createPool = function () {
 	global.DB_POOL = pool;
 };
 
+DBUtil.prototype.drain = function(){
+	global.DB_POOL.destroyAllNow();
+}
+
 DBUtil.prototype.saveOne = function(value,table_name){
 	//从连接池中获取db实例
     DB_POOL.acquire(function(err, db) {
         if (err) {
-            console.log('>>>'+JSON.stringify(err,null,2));
+            console.error('>>>'+JSON.stringify(err,null,2));
         } else {
             //collection相当于table
             var collection = db.collection(table_name);
@@ -57,13 +61,13 @@ DBUtil.prototype.saveMany = function(list,table_name,callback){
 	//从连接池中获取db实例
     DB_POOL.acquire(function(err, db) {
         if (err) {
-            console.log(JSON.stringify(err,null,2));
+            console.error(JSON.stringify(err,null,2));
         } else {
             //collection相当于table
             var collection = db.collection(table_name);
             collection.insertMany(list,function(err,result){
                 if(err)console.error(err);
-                console.log(JSON.stringify(result,null,2));
+                // console.log(JSON.stringify(result,null,2));
                 callback(result);
                 DB_POOL.release(db);//关闭连接
             });
@@ -91,7 +95,7 @@ DBUtil.prototype.queryData = function(table_name,query,callback){
 			console.error(JSON.stringify(err,null,2));
 		}else{
 			var collection = db.collection(table_name);
-			collection.find(query,{limit:1}).toArray(function(err,result){
+			collection.find(query).toArray(function(err,result){
 				if(err){callback(err,null);}
 				callback(null,result);
 			});

@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/dcriori/netspider#readme",
   "dependencies": {
-    "generic-pool": "^2.4.3"
+    "generic-pool": "^2.4.3",
+    "sleep": "^4.0.0"
   }
 }

@@ -23,8 +23,8 @@ superagent.get(baseUrl).end(function(err,resp){
     //验证得到的所有文章链接集合
     output(arr);
     //接下来遍历arr，解析每一个页面中需要的信息
-    async.mapLimit(arr,3,function(url,callback){
-        superagent.get(url).end(function(err,mes){
+    async.mapLimit(arr,1,function(url,callback){
+        superagent.get(url).timeout(3600*1000).end(function(err,mes){
             if(err){
                 console.log("get \""+url+"\" error !"+err);
                 console.log("message info:"+JSON.stringify(mes));
