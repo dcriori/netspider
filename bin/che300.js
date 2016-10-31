@@ -103,7 +103,7 @@ exports.fetchSeries = function(brands,callback){
 }
 
 exports.fetchCitys = function(callback){
-	dbutil.dropTable('tbl_che300_citys');
+	dbutil.dropTable('tbl_che300_citys'); //删除原来数据
 	var promise = new Promise(function (resolve, reject) {
 		superagent
 		.get(url_city)
@@ -176,14 +176,14 @@ exports.fetchData = function(callback){
 
 	var LogFile = log4js.getLogger('che300_log');
 
-	LogFile.trace('This is a Log4js-Test');
-	LogFile.debug('We Write Logs with log4js');
-	LogFile.info('You can find logs-files in the log-dir');
-	LogFile.warn('log-dir is a configuration-item in the log4js.json');
-	LogFile.error('In This Test log-dir is : \'./logs/log_test/\'');
+	// LogFile.trace('This is a Log4js-Test');
+	// LogFile.debug('We Write Logs with log4js');
+	// LogFile.info('You can find logs-files in the log-dir');
+	// LogFile.warn('log-dir is a configuration-item in the log4js.json');
+	// LogFile.error('In This Test log-dir is : \'./logs/log_test/\'');
 
 	//先取出热门地区
-	dbutil.queryData('tbl_che300_citys',{city_name:'南京'},function(err, result){
+	dbutil.queryData('tbl_che300_citys',{province:'热门地区'},function(err, result){
 		var items = [];
 		result.forEach(function(item){
 			items.push(item);
@@ -196,8 +196,8 @@ exports.fetchData = function(callback){
 function fetchCityData(cityItems,callback){
 	// var promise = new Promise(function (resolve, reject) {
 	
-	async.each(cityItems,function(cityItem,callback){
-		console.log(cityItem.city_name +':::'+ JSON.stringify(cityItem.link) +'.......');
+	async.eachSeries(cityItems,function(cityItem,callback){
+
 		var page_urls = [];
 		superagent
 		.get(cityItem.link)
@@ -237,15 +237,18 @@ function fetchCityData(cityItems,callback){
 			    	page_urls.push(url+'p='+p);
 			    }
 			    // callback(null,page_urls);
-			    fetchDetailData(page_urls,callback);
+			    fetchDetailData(page_urls,function(){
+			    	callback();
+			    });
 		    }
 		});
 		
-	}, function(error,results){
+	}, function(){
 
-		console.log('execute fetchCityData function '+results);
+		console.log('execute fetchCityData function ');
 
-        callback();
+		callback('done!');
+        
     });
 }
 
@@ -253,9 +256,9 @@ function fetchCityData(cityItems,callback){
 //获取车300的详细二手车辆信息
 function fetchDetailData(page_urls,callback){
 
-	async.map(page_urls,function(url,callback){
+	async.mapLimit(page_urls,2,function(url,callback){
 		var fetchStart = new Date().getTime();	//抓取起始时间
-		console.log('.......>>>>'+url);
+		// console.log('.......>>>>'+url);
         superagent
     	.get(url)
         	.set('Host','www.che300.com')
@@ -307,7 +310,7 @@ function fetchDetailData(page_urls,callback){
 	            		source_url: source_url
 	            	});
 	            });
-	            
+
 	            dbutil.saveMany(jsonData, 'tbl_che300_detail',function(result){
 	            	var time = new Date().getTime() - fetchStart;
 			        console.log('抓取' + url + '并入库成功', '，耗时' + time + '毫秒'); 

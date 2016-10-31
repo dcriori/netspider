@@ -18,7 +18,6 @@
       "filename": "/Users/sagaris/work_space/node_space/study/netspider/logs/log_date/date",
       "alwaysIncludePattern": true,
       "pattern": "-yyyy-MM-dd.log"
-
     }
   ],
   "replaceConsole": true,
