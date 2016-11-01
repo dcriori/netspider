@@ -24,29 +24,45 @@ if(!program.args.length) {
 	// //车300
  //    che300.fetchBrand(function(brands){
  //    	console.log('fetch brands done!');
- 		// 获取车系
- //    	che300.fetchSeries(brands,function(series){
+ // 		// 获取车系
+ //    	che300.fetchSeries(brands,function(result){
  //    		console.log('fetch series done!');
+ //            dbutil.drain();
+ //            process.exit(1);
 	// 	});	
  //    });
-    //获取城市
-    che300.fetchCitys(function(result){
-    	console.log('done');
-         //获取二手车数据
-        che300.fetchData(function(){
-            console.log("result :::::>>>");
-            console.log("result :::::>>>");
-            console.log("result :::::>>>");
-            console.log("result :::::>>>");
-            console.log("result :::::>>>");
-            console.log("result :::::>>>");
-            console.log("result :::::>>>");
-            console.log("result :::::>>>");
-            console.log('done!')
-            dbutil.drain();
-            process.exit(1);
-        });
-    });
 
+    // //获取城市
+    // che300.fetchCitys(function(result){
+    // 	console.log('done');
+    //      //获取二手车数据
+    //     che300.fetchData(function(){
+    //         console.log("result :::::>>>");
+    //         console.log("result :::::>>>");
+    //         console.log("result :::::>>>");
+    //         console.log("result :::::>>>");
+    //         console.log("result :::::>>>");
+    //         console.log("result :::::>>>");
+    //         console.log("result :::::>>>");
+    //         console.log("result :::::>>>");
+    //         console.log('done!')
+    //         dbutil.drain();
+    //         process.exit(1);
+    //     });
+    // });
+
+    che300.fetchData(function(){
+        console.log("result :::::>>>");
+        console.log("result :::::>>>");
+        console.log("result :::::>>>");
+        console.log("result :::::>>>");
+        console.log("result :::::>>>");
+        console.log("result :::::>>>");
+        console.log("result :::::>>>");
+        console.log("result :::::>>>");
+        console.log('done!')
+        dbutil.drain();
+        process.exit(1);
+    });
 
 }

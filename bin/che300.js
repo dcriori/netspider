@@ -8,13 +8,19 @@ var superagent = require('superagent');
 var dbutil = require('./dbutil.js');
 var async = require('async');
 var URL = require('url');
-// var sleep = require('sleep');sleep
 
 var log4js = require("log4js");
 var log4js_config = require("./log_config.json");
 log4js.configure(log4js_config);
 
-var lg = log4js.getLogger('che300_loginfo');  
+console.log("log_start start!");  
+var LogFile = log4js.getLogger('log_file');  
+  
+LogFile.trace('This is a Log4js-Test');  
+LogFile.debug('We Write Logs with log4js');  
+LogFile.info('You can find logs-files in the log-dir');  
+LogFile.warn('log-dir is a configuration-item in the log4js.json');  
+LogFile.error('In This Test log-dir is : \'./logs/log_test/\'');  
 
 
 var url_main = 'http://www.che300.com/';
@@ -26,6 +32,8 @@ var series = [];
 var datas = [];
 var citys = [];
 
+
+//
 exports.fetchBrand = function(callback){
 	dbutil.dropTable('tbl_che300_brands');
 
@@ -70,38 +78,33 @@ exports.fetchBrand = function(callback){
 exports.fetchSeries = function(brands,callback){
 	dbutil.dropTable('tbl_che300_series');
 
-	async.map(brands,function(item,callback){
+	async.mapLimit(brands,2,function(item,callback){
 		var url = url_series.replace('${brand_id}',item.net_id);
 		console.log(url);
 		superagent.get(url).end(function (err, res) {
 			if (err) {
 		      console.error(err);
 		    }
-			callback(null,{
-				net_id: item.net_id,
-				brand_name: item.brand_name,
-				spell: item.spell,
-				source: item.source,
-				series: JSON.parse(res.text)
-			});
-			//存放一份
-			series.push({
-				net_id: item.net_id,
-				brand_name: item.brand_name,
-				spell: item.spell,
-				source: item.source,
-				series: JSON.parse(res.text)
-			});
+
+		    if(res !== undefined){
+				callback(null,{
+					net_id: item.net_id,
+					brand_name: item.brand_name,
+					spell: item.spell,
+					source: item.source,
+					series: JSON.parse(res.text)
+				})
+		    }else{
+		    	LogFile.error(url);
+		    }
 		});
 		
 	},function(err,result) { 
-
-    	dbutil.saveMany(result,'tbl_che300_series',function(result){
+		dbutil.saveMany(result,'tbl_che300_series',function(result){
     		console.log('series done!');
+    		callback('done');
     	});
 	});
-
-	
 }
 
 exports.fetchCitys = function(callback){
@@ -172,17 +175,15 @@ exports.fetchCitys = function(callback){
     });
 }
 
+//获取车辆信息
 exports.fetchData = function(callback){
-	console.log("log_start start!");
-
 	//先取出热门地区
-	dbutil.queryData('tbl_che300_citys',{province:'宁夏'},function(err, result){
+	dbutil.queryData('tbl_che300_citys',{province:'吉林'},function(err, result){
 		var items = [];
 		result.forEach(function(item){
 			items.push(item);
 		});
-
-		lg.info(JSON.stringify(items)); //加入日志
+		LogFile.info(JSON.stringify(items)); //加入日志
 		fetchCityData(items,callback);
 	});
 }
@@ -207,7 +208,7 @@ function fetchCityData(cityItems,callback){
 
 			if(err){
                 console.log("fetchCityData get \""+cityItem.link+"\" error !"+err);
-                lg.error("fetchCityData get \""+cityItem.link+"\" error !"+err);
+                LogFile.error("fetchCityData get \""+cityItem.link+"\" error !"+err);
             }
 		    var $ = cheerio.load(res.text);
 
@@ -240,11 +241,10 @@ function fetchCityData(cityItems,callback){
 		});
 		
 	}, function(){
-		lg.info('execute fetchCityData function');
+		LogFile.info('execute fetchCityData function');
 		callback('done!');
     });
 }
-
 
 //获取车300的详细二手车辆信息
 function fetchDetailData(page_urls,callback){
@@ -252,7 +252,7 @@ function fetchDetailData(page_urls,callback){
 	async.mapLimit(page_urls,2,function(url,done){
 		var fetchStart = new Date().getTime();	//抓取起始时间
 		
-		lg.info('开始获取'+url+'详细信息');
+		LogFile.info('开始获取'+url+'详细信息');
 
         superagent
     	.get(url)
@@ -304,6 +304,7 @@ function fetchDetailData(page_urls,callback){
 	            });
 
 	            dbutil.saveMany(jsonData, 'tbl_che300_detail',function(result){
+
 	            	var time = new Date().getTime() - fetchStart;
 			        console.log('抓取' + url + '并入库成功', '，耗时' + time + '毫秒'); 
 	            	done(null,jsonData);	
@@ -317,11 +318,6 @@ function fetchDetailData(page_urls,callback){
 }
 
 function split_info(info){
-
-// 2012年10月
-// 7.3万公里
-// 北京
-// 瓜子二手车
 
 	var arr = info.split('/');
 	
@@ -345,7 +341,6 @@ function split_type(type){
 		type6: arr[5],
 	};
 }
-
 
 //此函数目前没用
 function parseQueryString(str) {
