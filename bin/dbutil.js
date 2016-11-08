@@ -40,7 +40,7 @@ DBUtil.prototype.drain = function(){
 	global.DB_POOL.destroyAllNow();
 }
 
-DBUtil.prototype.saveOne = function(value,table_name){
+DBUtil.prototype.saveOne = function(value,table_name,callback){
 	//从连接池中获取db实例
     DB_POOL.acquire(function(err, db) {
         if (err) {

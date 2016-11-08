@@ -3,6 +3,7 @@
 var program = require('commander');
 var che300 = require('./che300.js');
 var dbutil = require('./dbutil.js');
+var log = require('./logutil.js');
 
 program
     .version('1.0.0')
@@ -16,11 +17,12 @@ if(!program.args.length) {
     // var url = 'https://api.github.com/search/repositories?sort=stars&order=desc&q='+keywords;
     // console.log('keywords url: '+url);
 
-    console.log('=====创建连接池=====');
+    global.LogFile =  log.createLogger('log_date');
+    LogFile.info('=====创建连接池=====');
 
     //创建连接池
 	dbutil.createPool();
-
+    
 	// //车300
  //    che300.fetchBrand(function(brands){
  //    	console.log('fetch brands done!');
@@ -64,5 +66,9 @@ if(!program.args.length) {
         dbutil.drain();
         process.exit(1);
     });
+
+    // che300.test(function(){
+    //     console.log('done');
+    // });
 
 }

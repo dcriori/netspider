@@ -1,3 +1,4 @@
+'use strict'
 /**
 che300模块
 author: sagaris
@@ -8,30 +9,21 @@ var superagent = require('superagent');
 var dbutil = require('./dbutil.js');
 var async = require('async');
 var URL = require('url');
+var cacheutil = require('./cacheutil');
 
-var log4js = require("log4js");
-var log4js_config = require("./log_config.json");
-log4js.configure(log4js_config);
+var redis = require('redis');
+var client = redis.createClient();
 
-console.log("log_start start!");  
-var LogFile = log4js.getLogger('log_file');  
-  
-LogFile.trace('This is a Log4js-Test');  
-LogFile.debug('We Write Logs with log4js');  
-LogFile.info('You can find logs-files in the log-dir');  
-LogFile.warn('log-dir is a configuration-item in the log4js.json');  
-LogFile.error('In This Test log-dir is : \'./logs/log_test/\'');  
-
-
+//url config
 var url_main = 'http://www.che300.com/';
 var url_series = 'http://meta.che300.com/meta/series/series_brand${brand_id}.json?v=1475147550';
 var url_city = 'http://www.che300.com/switch_city.htm';
 
+//
 var brands = [];
 var series = [];
 var datas = [];
 var citys = [];
-
 
 //
 exports.fetchBrand = function(callback){
@@ -107,6 +99,16 @@ exports.fetchSeries = function(brands,callback){
 	});
 }
 
+exports.test = function(callback){
+	LogFile.info('test');
+	cacheutil.redis_set(123,{name:'dcriori',age:12});
+	LogFile.info(cacheutil);
+	cacheutil.redis_get(123,function(err,result){
+		console.log(result);
+	});
+	callback();
+}
+
 exports.fetchCitys = function(callback){
 	dbutil.dropTable('tbl_che300_citys'); //删除原来数据
 	var promise = new Promise(function (resolve, reject) {
@@ -177,8 +179,13 @@ exports.fetchCitys = function(callback){
 
 //获取车辆信息
 exports.fetchData = function(callback){
+	// 删除redis的数据
+	// client.flushdb( function (err, succeeded) {
+	//     console.log(succeeded); // will be true if successfull
+	// });
+
 	//先取出热门地区
-	dbutil.queryData('tbl_che300_citys',{province:'吉林'},function(err, result){
+	dbutil.queryData('tbl_che300_citys',{province:'热门地区'},function(err, result){
 		var items = [];
 		result.forEach(function(item){
 			items.push(item);
@@ -236,8 +243,8 @@ function fetchCityData(cityItems,callback){
 		    }
 
 		    fetchDetailData(page_urls,function(){
-			    	callback();
-			    });
+		    	callback();
+		    });
 		});
 		
 	}, function(){
@@ -252,7 +259,7 @@ function fetchDetailData(page_urls,callback){
 	async.mapLimit(page_urls,2,function(url,done){
 		var fetchStart = new Date().getTime();	//抓取起始时间
 		
-		LogFile.info('开始获取'+url+'详细信息');
+		LogFile.info('开始获取- '+url+' -详细信息');
 
         superagent
     	.get(url)
@@ -274,12 +281,14 @@ function fetchDetailData(page_urls,callback){
 	            var $=cheerio.load(mes.text);
 
 	            var jsonData = [];
+	            var count = 0;
 
 	            $('.list-item').each(function(idx,element){
 	            	var title = $(this).attr('title');
 	            	var arr = $(this).find('a');
 	            	var detail_item_url = $(arr[0]).attr('href');//取Iem的明细URL，取item detail 的 id
 	            	var detail_id =  detail_item_url.replace('http://www.che300.com/buycar/x','');
+	            	// var detail_id =  detail_item_url.replace('http://www.che300.com/buycar/','');
 	            	var source_url = getValue($(arr[1]).attr('href'),'url');
 					var source = getValue($(arr[1]).attr('href'),'source');
 
@@ -291,7 +300,7 @@ function fetchDetailData(page_urls,callback){
 	            	var price = $(prr[2]).text().trim().replace(/\s+/g, "");
 	            	var seller = $(this).find('span.seller').text();
 
-	            	jsonData.push({
+	            	var itemJSON = {
 	            		title: title,
 	            		detail_id: detail_id,
 	            		type: split_type(type),
@@ -300,15 +309,32 @@ function fetchDetailData(page_urls,callback){
 	            		seller: seller,
 	            		source: source,
 	            		source_url: source_url
+	            	};
+
+	            	client.select(13,function(err,res){
+	            		client.get(parseInt(detail_id),function(err,result){
+	            			if(result){
+	            				LogFile.info('id ' + detail_id +' 存在  get info:' + result);
+	            				count++;
+	            				if (count>9) {
+	            					LogFile.info('超过一页重复，则跳过！');
+	            					console.log();
+	            				}
+	            			} else {
+	            				LogFile.info('id ' + detail_id +' 不存在');
+	            				jsonData.push(JSON.stringify(itemJSON));
+
+	            				dbutil.saveOne(itemJSON, 'tbl_che300_detail',function(result){
+							    	var time = new Date().getTime() - fetchStart;
+							        LogFile.info('抓取 ' + url + ' 并入库成功', '，耗时' + time + '毫秒'); 	
+							        console.log('抓取 ' + url + ' 并入库成功', '，耗时' + time + '毫秒');
+					            });
+	            				client.set(parseInt(detail_id),JSON.stringify(itemJSON));
+	            			}
+	            		});
 	            	});
 	            });
-
-	            dbutil.saveMany(jsonData, 'tbl_che300_detail',function(result){
-
-	            	var time = new Date().getTime() - fetchStart;
-			        console.log('抓取' + url + '并入库成功', '，耗时' + time + '毫秒'); 
-	            	done(null,jsonData);	
-	            });
+	            done(null,jsonData);
             }
         });
     },function(error,results){

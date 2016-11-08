@@ -23,8 +23,8 @@
   "replaceConsole": true,
   "levels":
   {
-    "log_file":"ALL",
     "console":"ALL",
+    "log_file":"ALL",
     "log_date":"ALL"
   }
 }

@@ -38,8 +38,6 @@ if(!program.args.length) {
 	        console.log(chalk.grey('Clone url: ' + item.clone_url + '\n'));
 	      });
 
-	    
-
 	    } else {
 	      	console.log('Oh no! error ' + res.text);
 	    }

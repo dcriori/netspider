@@ -26,6 +26,8 @@
   "homepage": "https://github.com/dcriori/netspider#readme",
   "dependencies": {
     "generic-pool": "^2.4.3",
+    "log4js": "^1.0.0",
+    "redis": "^2.6.3",
     "sleep": "^4.0.0"
   }
 }
