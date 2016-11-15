@@ -4,6 +4,7 @@ var program = require('commander');
 var che300 = require('./che300.js');
 var dbutil = require('./dbutil.js');
 var log = require('./logutil.js');
+var schedule = require('node-schedule');
 
 program
     .version('1.0.0')
@@ -22,7 +23,7 @@ if(!program.args.length) {
 
     //创建连接池
 	dbutil.createPool();
-    
+
 	// //车300
  //    che300.fetchBrand(function(brands){
  //    	console.log('fetch brands done!');
@@ -53,7 +54,12 @@ if(!program.args.length) {
     //     });
     // });
 
-    che300.fetchData(function(){
+    // var j = schedule.scheduleJob('0 27 * * * *', function(){
+    //     console.log('The answer to life, the universe, and everything!');
+        
+    // });
+    
+    che300.fetch_data(function(err,result){
         console.log("result :::::>>>");
         console.log("result :::::>>>");
         console.log("result :::::>>>");
@@ -66,6 +72,7 @@ if(!program.args.length) {
         dbutil.drain();
         process.exit(1);
     });
+
 
     // che300.test(function(){
     //     console.log('done');
