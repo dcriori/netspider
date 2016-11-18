@@ -54,10 +54,10 @@ if(!program.args.length) {
     //     });
     // });
 
-    // var j = schedule.scheduleJob('0 27 * * * *', function(){
-    //     console.log('The answer to life, the universe, and everything!');
+    var j = schedule.scheduleJob('7 * * * * *', function(){
+        console.log('The answer to life, the universe, and everything!');
         
-    // });
+    });
     
     che300.fetch_data(function(err,result){
         console.log("result :::::>>>");

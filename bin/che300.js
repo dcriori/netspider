@@ -190,17 +190,22 @@ exports.fetch_data = function(callback) {
 	// });
 	
 	//获取车辆信息
-	dbutil.queryData('tbl_che300_citys',{province:'热门地区'},function(err,result){
-		console.log(result);
+	dbutil.queryData('tbl_che300_citys',{province:'河南'},function(err,result){
+		// console.log(result); //打印获取到的所有城市集合
 		var i = 0;
+		//async 第一层使用 eachSeries 
 		async.eachSeries(result,function(cityItem,done){
+			
+			//获取城市
 			fetch_city_data(cityItem,function(err2,result2){
 				//result2 返回当前城市下所有页面的url
 				if(err2){
 					console.log("fetch_data get \""+cityItem.link+"\" error !"+err);
                 	LogFile.error("fetch_data get \""+cityItem.link+"\" error !"+err);
 				}else{
-					console.log('=============================\n\r \n\r'+cityItem.city_name+'\n\r');
+					console.log('正在获取 【' + cityItem.city_name +'】 的车辆信息,共'+result2.length+'页');
+					LogFile.info('正在获取 【' + cityItem.city_name +'】 的车辆信息,共'+result2.length+'页');
+					// console.log('=============================\n\r \n\r'+cityItem.city_name+'\n\r');
 					// console.log(result2);
 
 					//async each series 
@@ -256,6 +261,9 @@ exports.fetch_data = function(callback) {
 function fetch_detail_data(res,start_time,callback){
 
 	console.time('waterfall');
+	//这里使用waterfall,第一个函数返回所有的当前页面的车辆信息
+	//第二个方法里拿这些车辆信息与redis里面的数据做对比
+	//
 	async.waterfall([
 	    function (done) {
 	    	//解析这个url页面返回的HTML数据，从中拿到车辆详情
@@ -325,8 +333,8 @@ function fetch_detail_data(res,start_time,callback){
 			    			} else {
 			    				
 			    				dbutil.saveOne(JSON.parse(item), 'tbl_che300_detail',function(result){
-			    					LogFile.info('id ' + detail_id +' 不存在');
-			    					console.log('id ' + detail_id +' 不存在');
+			    					// LogFile.info('id ' + detail_id +' 不存在');
+			    					// console.log('id ' + detail_id +' 不存在');
 							    	var time = new Date().getTime() - start_time;
 							        LogFile.info('抓取并入库成功', '，耗时' + time + '毫秒'); 	
 							        console.log('抓取并入库成功', '，耗时' + time + '毫秒');
@@ -341,21 +349,22 @@ function fetch_detail_data(res,start_time,callback){
 		    	});
 
 	    	},function(err,result){
-	    		console.log('$$$$$:'+err +' result:'+result);
 
 	    		if (err) {
 				    var fakeErr = new Error();
 			    	fakeErr.break = true;
-			    	callback(fakeErr,'abc');
+			    	callback(fakeErr);
 			    } else {
-			    	done(null, 'abc');	
+			    	done(null, result);	
 			    }
 
 	    		
 	    	});
 	    },
-	], function (error, result) {
-	    console.log('>>>>>>>>'+result);
+	], 
+	//这里做最后的处理
+	function (error, result) {
+	    console.log(result);
 	    console.timeEnd('waterfall');//还有这么牛B的东西啊
 	    if (error) {
 		    var fakeErr = new Error();
@@ -364,9 +373,7 @@ function fetch_detail_data(res,start_time,callback){
 	    } else {
 	    	callback();
 	    }
-
 	});
-
 }
 
 function fetch_city_data(cityItem,callback){
@@ -412,6 +419,7 @@ function fetch_city_data(cityItem,callback){
 		    }else{
 		    	page_urls.push(cityItem.link);
 		    }
+
             callback(null,page_urls);
         }
 	});
