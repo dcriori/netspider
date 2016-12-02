@@ -16,62 +16,232 @@ var client = redis.createClient();
 
 //url config
 var url_main = 'http://www.che300.com/';
-var url_series = 'http://meta.che300.com/meta/series/series_brand${brand_id}.json?v=1475147550';
+var url_series = 'http://meta.che300.com/meta/series/series_brand${brand_id}.json?v=1479546715';
 var url_city = 'http://www.che300.com/switch_city.htm';
+var url_models = 'http://meta.che300.com/meta/model/model_series${series_id}.json?v=1479546715';
 
 //
 var brands = [];
 var series = [];
-var datas = [];
+var models = [];
+
+
 var citys = [];
+var datas = {};
 
-//获取品牌
-exports.fetchBrand = function(callback){
-	dbutil.dropTable('tbl_che300_brands');
+exports.fetch_auto_info = function(callback){
+	// function(series,done){
+	// 		var new_series = [];
+	// 		// console.log('query brands' + exist_values);
+	// 		// 取出已有品牌信息后，将集合传给第二个函数；然后通过首页（url_main）获取再有的品牌信息
 
-	var promise = new Promise(function (resolve, reject) {
-        superagent.get(url_main).end(function (err, res) {
-            if (err) {
-                reject(err);
-            }
-            // sres.text 里面存储着网页的 html 内容，将它传给 cheerio.load 之后
-            // 就可以得到一个实现了 jquery 接口的变量，我们习惯性地将它命名为 `$`
-            // 剩下就都是 jquery 的内容了
-            var $ = cheerio.load(res.text);
+	// 		async.eachSeries(exist_series_ids,function(item, callback){
+	// 			var url = url_series.replace('${brand_id}',item);
+	// 			console.log(url);
+	// 			superagent.get(url).end(function (err, res) {
+	// 	            if (err) {
+	// 	                done('Error 网络访问出错')
+	// 	                callback('Error 网络访问出错',null);
+	// 	            } else{
+	// 	            	// sres.text 里面存储着网页的 html 内容，将它传给 cheerio.load 之后
+	// 	            	// 就可以得到一个实现了 jquery 接口的变量，我们习惯性地将它命名为 `$`
+	// 	            	// 剩下就都是 jquery 的内容了
 
-            $('div').find('.list_1').each(function(idx,element){
-                // console.log("name:"+ $(this).text()+"  id:"+$(this).attr('id') + "  rel:" + $(this).attr('rel'));
-                var _id = $(this).attr('id');
-                var name = $(this).text();
-                var spell = $(this).attr('rel');
-                var source = '车300';
+	// 		          	if(res !== undefined){
+	// 		          		var series_item = JSON.parse(res.text);
+	// 						forEach(function(item){
+	// 							if(exist_series_ids.indexOf(series_item.series_id) == -1){
+	// 								new_series.push({
+	// 									brand_id: item.net_id,
+	// 									series_id: series_item.series_id,
+	// 									series_name: series_item.series_name,
+	// 									series_group_name: series_item.series_group_name
+	// 								});
+	// 							}
+	// 						});
 
-                brands.push({
-                    net_id: _id,
-                    brand_name: name,
-                    spell: spell,
-                    source: source
-                });
-                resolve(brands);
-            });
-        });
-    });
-    promise.then(function(value){
-        dbutil.saveMany(value,'tbl_che300_brands',function(result){
-            console.log('done');
-            callback(value);
-        });
+	// 				    }else{
+	// 				    	LogFile.error(url);
+	// 				    	callback('Error 解析数据出错', null);
+	// 				    }
 
-    },function(err){
-        console.log(err);
-    });
+	// 		            console.log('====================');
+	// 		            console.log(new_series);
+	// 		            console.log('====================');
+
+	// 		            //调用下一个方法
+	// 		            done(null,new_series);
+	// 	            }
+		            
+	// 	        });
+	// 		},function(err,new_series){
+	// 			console.log('====>>>'+err);
+	// 			if (err) {
+	// 				console.log(err);
+	// 			}else{
+	// 				//new_brands可能为空
+	// 				if(new_series.length > 0){
+	// 					console.log('====>>>'+brands);
+	// 					dbutil.saveMany(new_series,'tbl_che300_series',function(result){
+	// 			            console.log('done');
+	// 			            new_series.forEach(function(item){
+	// 			            	console.log('new item is :'+ JSON.stringify(item));
+	// 			            	series.push(item);
+	// 			            });
+	// 			            callback(series);
+	// 			        });	
+	// 				}else{
+	// 					callback(series);
+	// 				}
+	// 			}
+	// 		});
+	// 	}
 }
 
-//获取车系
-exports.fetchSeries = function(brands,callback){
-	dbutil.dropTable('tbl_che300_series');
+//获取品牌
+exports.fetch_brand = function(callback){
+	// drop table tbl_che300_brands
+	// dbutil.dropTable('tbl_che300_brands');
 
-	async.mapLimit(brands,2,function(item,callback){
+	async.waterfall([
+		// 第一个函数，先取出已经存在tbl_che300_brands里的品牌数据
+		function(done){
+			dbutil.queryData('tbl_che300_brands',{},function(err,result){
+				// console.log('query brands' + result);
+				var exist_brand_ids = [];
+				for(var index in result){
+					exist_brand_ids.push(result[index].net_id);
+					brands = result;
+				}
+				done(null,exist_brand_ids);
+			});
+		}, function(exist_brand_ids,done){
+			var new_brands = [];
+			// console.log('query brands' + exist_values);
+			// 取出已有品牌信息后，将集合传给第二个函数；然后通过首页（url_main）获取再有的品牌信息
+			superagent.get(url_main).end(function (err, res) {
+	            if (err) {
+	                done('Error 网络访问出错')
+	            }
+	            // sres.text 里面存储着网页的 html 内容，将它传给 cheerio.load 之后
+	            // 就可以得到一个实现了 jquery 接口的变量，我们习惯性地将它命名为 `$`
+	            // 剩下就都是 jquery 的内容了
+	            var $ = cheerio.load(res.text);
+
+	            $('div').find('.list_1').each(function(idx,element){
+	            	
+	                // console.log("name:"+ $(this).text()+"  id:"+$(this).attr('id') + "  rel:" + $(this).attr('rel'));
+	                var _id = $(this).attr('id');
+	                var name = $(this).text();
+	                var spell = $(this).attr('rel');
+	                var source = '车300';
+
+	                if (exist_brand_ids.indexOf(_id) == -1) {
+
+	                	new_brands.push({
+		                    net_id: _id,
+		                    brand_name: name,
+		                    spell: spell,
+		                    source: source
+		                });
+
+		                console.log('push '+{
+		                    net_id: _id,
+		                    brand_name: name,
+		                    spell: spell,
+		                    source: source
+		                } + 'into db');
+		                LogFile.info('push '+{
+		                    net_id: _id,
+		                    brand_name: name,
+		                    spell: spell,
+		                    source: source
+		                } + 'into db');
+	                }
+
+	            });
+	            console.log('====================');
+	            console.log(new_brands);
+	            console.log('====================');
+
+	            //调用下一个方法
+	            done(null,new_brands);
+	        });
+		}
+	],
+	// 取出品牌后
+	function(err,new_brands){
+		console.log('====>>>'+err);
+		if (err) {
+			console.log(err);
+		}else{
+			//new_brands可能为空
+			if(new_brands.length > 0){
+				dbutil.saveMany(new_brands,'tbl_che300_brands',function(result){
+		            console.log('done');
+		            new_brands.forEach(function(item){
+		            	console.log('new item is :'+ JSON.stringify(item));
+		            	brands.push(item);
+		            });
+		            callback(null,brands);
+		        });	
+			}else{
+				callback(null,brands);
+			}
+		}
+	});
+}
+
+
+
+//获取车系
+exports.fetch_series = function(brands,callback){
+
+	async.waterfall([
+		// 第一个函数，先取出已经存在tbl_che300_series里的车系数据
+		function(done){
+			var exist_series_ids = [];
+			dbutil.queryData('tbl_che300_series',{},function(err,result){
+				console.log('query series' + result);
+				if (result.length == 0) {
+					done(null,[]);
+				} else {	
+					series = result;
+					for(var index in result){
+						exist_series_ids.push(result[index].series_id);
+					}
+					done(null,exist_series_ids);
+				}
+				
+			});
+		}, 
+
+		function(exist_series_ids,done){
+
+			// 使用品牌来到网上查所有品牌的车系信息
+			fetch_series_from_brands(brands, exist_series_ids, function(err, series){
+				
+				
+				done(null,series);
+
+			});	
+		}
+	],
+	// 取出车系后
+	function(err,new_series){
+		
+		if (err) {
+			console.log(err);
+		}else{
+			//new_series可能为空
+			callback(null,series);
+		}
+	});
+	// dbutil.dropTable('tbl_che300_series');
+}
+
+function fetch_series_from_brands(brands, exist_series_ids, callback){
+	async.mapSeries(brands,function(item,done){
 		var url = url_series.replace('${brand_id}',item.net_id);
 		console.log(url);
 		superagent.get(url).end(function (err, res) {
@@ -80,38 +250,61 @@ exports.fetchSeries = function(brands,callback){
 		    }
 
 		    if(res !== undefined){
-				callback(null,{
-					net_id: item.net_id,
-					brand_name: item.brand_name,
-					spell: item.spell,
-					source: item.source,
-					series: JSON.parse(res.text)
-				})
+		    	var items = JSON.parse(res.text);
+		    	var insert_series = [];
+		    	
+		    	console.log('exist_series_ids' + exist_series_ids);
+
+		    	console.log('items' + JSON.stringify(items));
+
+		    	items.forEach(function(series_item){
+		    		if (exist_series_ids.indexOf(series_item.series_id) == -1) {
+		    			series.push({
+								brand_id: item.net_id,
+								series_id: series_item.series_id,
+								series_name: series_item.series_name,
+								series_group_name: series_item.series_group_name
+							});
+
+			    		LogFile.info({
+								brand_id: item.net_id,
+								series_id: series_item.series_id,
+								series_name: series_item.series_name,
+								series_group_name: series_item.series_group_name
+							});
+
+			    		insert_series.push({
+								brand_id: item.net_id,
+								series_id: series_item.series_id,
+								series_name: series_item.series_name,
+								series_group_name: series_item.series_group_name
+							});
+		    		}
+		    	});
+		    	if (insert_series.length > 0) {
+		    		dbutil.saveMany(insert_series,'tbl_che300_series',function(result){
+			    		console.log('series done!');
+			    		done(null,insert_series);
+			    	});	
+		    	}else{
+		    		console.log('series null!');
+		    		done(null,[]);
+		    	}
 		    }else{
 		    	LogFile.error(url);
+		    	done('Error 数据解析错误！');
 		    }
 		});
 		
-	},function(err,result) { 
-		dbutil.saveMany(result,'tbl_che300_series',function(result){
-    		console.log('series done!');
-    		callback('done');
-    	});
-	});
-}
+	},function(err,series) { 
+		
+    	callback(null,series);
 
-exports.test = function(callback){
-	LogFile.info('test');
-	cacheutil.redis_set(123,{name:'dcriori',age:12});
-	LogFile.info(cacheutil);
-	cacheutil.redis_get(123,function(err,result){
-		console.log(result);
 	});
-	callback();
 }
 
 //获取城市列表
-exports.fetchCitys = function(callback){
+exports.fetch_citys = function(callback){
 	dbutil.dropTable('tbl_che300_citys'); //删除原来数据
 	var promise = new Promise(function (resolve, reject) {
 		superagent
@@ -190,7 +383,7 @@ exports.fetch_data = function(callback) {
 	// });
 	
 	//获取车辆信息
-	dbutil.queryData('tbl_che300_citys',{province:'河南'},function(err,result){
+	dbutil.queryData('tbl_che300_citys',{province:'河北'},function(err,result){
 		// console.log(result); //打印获取到的所有城市集合
 		var i = 0;
 		//async 第一层使用 eachSeries 
@@ -242,7 +435,7 @@ exports.fetch_data = function(callback) {
 					        				done2();
 					        			}
 						            });
-						            //fetch_detail_data 开始
+						            //fetch_detail_data 结束
 					        	}
 					        });
 
@@ -357,8 +550,6 @@ function fetch_detail_data(res,start_time,callback){
 			    } else {
 			    	done(null, result);	
 			    }
-
-	    		
 	    	});
 	    },
 	], 
@@ -424,131 +615,6 @@ function fetch_city_data(cityItem,callback){
         }
 	});
 }
-
-//获取车辆信息
-exports.fetchData = function(callback){
-	// 删除redis的数据
-	// client.flushdb( function (err, succeeded) {
-	//     console.log(succeeded); // will be true if successfull
-	// });
-
-	//先取出热门地区
-	dbutil.queryData('tbl_che300_citys',{province:'热门地区'},function(err, result){
-		console.log(result);
-		var items = [];
-		result.forEach(function(item){
-			items.push(item);
-		});
-		LogFile.info(JSON.stringify(items)); //加入日志
-		console.log(items);
-		// fetchCityData(items,callback);
-	});
-}
-
-function fetchCityData(cityItems,callback){
-	
-	async.eachSeries(cityItems,function(cityItem,done){
-
-		var page_urls = [];
-		superagent
-		.get(cityItem.link)
-			.set('Host','www.che300.com')
-        	.set('Connection','keep-alive')
-        	.set('Cache-Control','max-age=0')
-        	.set('Upgrade-Insecure-Requests','1')
-        	.set('User-Agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
-        	.set('Accept-Encoding','gzip, deflate, sdch')
-        	.set('Accept-Language','en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4')
-		.timeout(3600*1000)
-		.end(function (err, res) {
-			if(err){
-                console.log("fetchCityData get \""+cityItem.link+"\" error !"+err);
-                LogFile.error("fetchCityData get \""+cityItem.link+"\" error !"+err);
-            }
-		    var $ = cheerio.load(res.text);
-		    //获取随便一个翻页url
-		    var href = $('.pagination').find('a').last().attr('href');
-
-		    if(href !==undefined){
-			    var href_url = URL.parse(href);
-
-			    //把url的参数去掉
-			    var url = href.replace(href_url.query,'');
-			    var span = $('.pagination').find('span').text();
-			    var pages = parseInt(span.replace(/[^0-9]/ig,""));
-			    var p = '';
-			    for(var i=0; i<pages; i++){
-			    	if (i===0) {
-			    		p = '';
-			    	}else{
-			    		p = i*20;
-			    	}
-			    	page_urls.push(url+'p='+p);
-			    }
-		    }else{
-		    	page_urls.push(cityItem.link);
-		    }
-
-		    fetchDetailData(page_urls,function(){
-		    	done();
-		    });
-		});
-		
-	}, function(){
-		LogFile.info('execute fetchCityData function');
-		callback('done!');
-    });
-}
-
-//获取车300的详细二手车辆信息
-function fetchDetailData(page_urls,callback){
-
-	async.eachSeries(page_urls,function(url,done){
-
-		var fetchStart = new Date().getTime();	//抓取起始时间
-		
-		LogFile.info('开始获取- ' + url + ' -详细信息');
-		console.log('开始获取- ' + url + ' -详细信息');
-
-        superagent
-    	.get(url)
-        	.set('Host','www.che300.com')
-        	.set('Connection','keep-alive')
-        	.set('Cache-Control','max-age=0')
-        	.set('Upgrade-Insecure-Requests','1')
-        	.set('User-Agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
-        	.set('Accept-Encoding','gzip, deflate, sdch')
-        	.set('Accept-Language','en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4')
-        .timeout(3600*1000)
-        .end(function(err,mes){
-            
-            if(err){
-                console.log("get : " + url + " error : " + err);
-                done(err);
-            } else if( mes.status == 200 && mes !== undefined) {
-
-	          	fetch_detail_data(mes,fetchStart,function(err){
-	            	
-	            	if (err && err.break){
-	            		console.log('==>>'+err.break);
-				      	done(err);
-				    }else{
-				    	console.log('==>>>>>'+err.break);
-				      	done();
-				    }
-	            });  
-
-            } else {
-            	console.log('==>>>>>>>');
-            	done('Error:获取车辆信息失败！');
-            }
-        });
-    },function(error){
-        console.log("result :::::>>>");
-        callback(error);
-    });
-}
-
 
 function split_info(info){
 

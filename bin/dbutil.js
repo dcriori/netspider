@@ -67,7 +67,7 @@ DBUtil.prototype.saveMany = function(list,table_name,callback){
             var collection = db.collection(table_name);
             collection.insertMany(list,function(err,result){
                 if(err)console.error(err);
-                // console.log(JSON.stringify(result,null,2));
+                console.log(JSON.stringify(result,null,2));
                 callback(result);
                 DB_POOL.release(db);//关闭连接
             });
