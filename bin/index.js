@@ -40,12 +40,15 @@ function tuhu() {
     //     console.log('FETCH_SHOPS COMMPLETE!!!');
     // });
 
-
-    tuhu.fetch_shop_info(function(){
-        console.log('hahaha');
-        dbutil.drain();
-        process.exit(1);
+    tuhu.fetch_all_shops(function(){
+        console.log('FETCH_SHOPS COMMPLETE!!!');
     });
+
+    // tuhu.fetch_shop_info(function(){
+    //     console.log('hahaha');
+    //     dbutil.drain();
+    //     process.exit(1);
+    // });
 
 
 }

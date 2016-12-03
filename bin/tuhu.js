@@ -87,13 +87,97 @@ var areas = [
 }
 ];
 
+function fetch_all_shops(callback){
+	async.mapSeries([{
+	serviceType:'0',
+	pageIndex:'1',
+	district:'',
+	city:'',
+	province:'',
+	lat:'29.570997',
+	lng:'106.557165'
+}],function(area,done){
+		console.log('>>>>>>>>>>>>>>>>>>'+area);
+		fetch_shops(area,function(){
+
+			done(null,area.city);
+
+		});
+	},function(err,result){
+
+		callback();
+
+	});
+
+	// console.log('fetch_all_shops');
+	// var pages_arr = [];
+	// var faile_arr = [];
+
+	// for (var i = 1;i<=1000; i++) {
+	// 	pages_arr.push(i);
+	// }
+
+	
+	// async.mapSeries(pages_arr,function(item,callback){
+	// 	var url_all_shop = 'https://api.tuhu.cn/Shops/SelectShopList?&serviceType=0&pageIndex=${pageIndex}&sort=HuShi&pids=FU-CARWASHING-XICHE%7C1&district=&shopClassification=&City=&Province=&LatBegin=30.294947&LngBegin=120.095766';
+	// 	var options = {
+	// 	  url: url_all_shop.replace('${pageIndex}',item),
+	// 	  headers: {
+	// 		'Host':'api.tuhu.cn',
+	// 		'Accept':'*/*',
+	// 		'InternetSpeed':'4.371',
+	// 		'car':'{"VehicleID": "VE-BMW3-320L", "PaiLiang": "2.0T", "Nian": "2015", "LiYangID": "", "TID": "14770"}',
+	// 		'key':'2535148e-70d6-4ec3-b37a-ef81907f23c9',
+	// 		'Accept-Language':'zh-Hans-CN;q=1, en-CN;q=0.9',
+	// 		// 'Accept-Encoding':'gzip, deflate',
+	// 		'usersession':'F76033A5CCFB78AA017DB03F71390EA9',
+	// 		'DeviceID':'121A818D-5AEA-4436-85F0-22576D9D70EF',
+	// 		'User-Agent':'Tuhu/3.4.3 (iPhone; iOS 10.0.2; Scale/2.00)',
+	// 		'InternetType':'WIFI',
+	// 		'black_box':'ewogICJlcnJvck1zZyIgOiAiRXJyb3IgRG9tYWluPXVuZmluaXNoZWQgQ29kZT0wIFwiKG51bGwpXCIiLAogICJvcyIgOiAiaU9TIiwKICAiYmxhY2tCb3giIDogIk1qUlFXOGxoSnlBZlk4SXJZU1wvQzNEdGJXbU5jWEM3aFhTcWlZOGRuWm4zc1krZEk0a0pIUVFNN1NFTlE5K1orXC9VbE40K0JLNFVoSjlEbDcrVitSVFJJaTdTQndZbXh1WnlVaUt5UXFOUFFCTjRrZ0g1VWdHT2t4SmpNd1Q1WUZOcWhTNFZCSTZcL3hSUTZKWFFRXC9MMytCK1wvVkFMVUFBMVVQbzRVN0lYXC9GaDVmYWVlYlh6Z3IxWGpzSGVjcGNwb2FhakRtZFhxZXJMQm9Jenp2TkRDeDFXSml0ZVdsY2UxemdMWUEySlA5b2tSWVUyMDlFNlgzRjU3RGZmNkZ4NFlxdWljYVhHZmJIbXBncE9oaWEwbWR2THl2TFA3cnJ5eGRiS0FjR21xZUc0aW9zNFluWnVRbXRlUmphZVFsczVURTM5MEYzRENDZHUyaVpHNUJNSDBBSWNjSVMycUhpMmpYbXhKWThScU1PUUNHUE1DTm5GdVpEQkJZVHhsMDg3RDBTVkc0K2NXU0E2SjYrSVg2VVwvKytPM0lMUGNyTHFOSDU1WUQ5VTdQN29CWjRqd0I1T0lHNVBvck5qN1M3NU1ETlZ3c043SnZManhnWTlGZFcrSW8wNVlIVVFvRzdGZFo5UnF1UG5BSlZCQThWNmdMUVJVTE9RRTNRUUpRUDZVT1F2emN0MkhmcmV1ZmhiT3pkV215b1dDQ2Z2ZnN0MXJncEs1YnAwUG9zMFBpQ052WkNOZllBMFhQQWdLS2tkRzRpc203YllTTG14djJ5M0g1ZHRwNm5OV25rR21jYjFiaXVLSGVFZlBtdDBPbWVwT3RiV1dlZEc4YWRXNG1icFd0bmNlR2l3cjN5d2p2RXdMT0JZOFNuczRHanNDTGpjaVZqWVdSbHR5eHFkODhJaTZhV214RVg4dHoybU5nNThacVpqNmRQekVoSDU2ekw5UkJXbjNFWlM3VjhvM1c1K0luNVVOUVFBVTVVa1E4UXFsWjZxeDJUbDY0UVJZWlM3VWQ4ekF2SE9jalJPRWdKOGhxWm1Zb0k1c3JLT1IyOTQyYUdpUjlMVllxSUZVdFRCSWFYUUo5VjdnN1BCK1lWbFZsVVRzT1BrRUtPbHc2SzdKN1VxdDQrRUhkcGZMY3IxdnZ2WUhwd0xpUHB2T1ZuZGZFcktmaHB2VGJ0dDFrdWU1bnMzejJiM1NiQzNDZGQyUE5wZzFTQnMwK2p0ME1qWTBFanR6NkUyYjlGSFdwYVdXUGFHdWdydnZBcHU4aWRyeXFkYWp0Y3BEcGRMcGZhVzRrYWFyRGJwQzNpSjhpanNwTEF4T1FrWmFUbE16YnBJaVwvZ2R1MG54djhEaER0QnQ0XC9qbWhjMFRsbDFEdHZYOU5CMzhxRDE5M3QzcU5zMURBdEs0K3JNaitaTnprQjQrZDU0VUVHUFJjR1JjWHBzRVlNTlJNXC9WQkYzK24zMitGUVJRbGtLUE9SeTBtQWFIejZoSG1oQzM5UXFHa3dvS3psYVdEWnBMekFkTWpNcSsrcU85OEZqT0E2cVBrRUs3RUI0UWsyMlI2WUdRQWc4UGtrVlVrSjJRUVVSU2syVXUwNXN1MURrdnZ2aHd2MUJ0MGJMdExmc2JYU3lldHB6Y0dYendLREN0S3o1RXhiVXQyck56Y21QaUp5VnFKT1ZvTmpaQWh2S0UxWDVFaEs0bUltUmNLSG5yR2FmaEdDeGhyOHNnYnBFZlhXaGhkS3Nmcnp2cmZiRnUwNXR3dVhuaVlhNWlKQ1duSm1SYU5CNmJFczhcL0pmWTFHPT0iLAogICJ2ZXJzaW9uIiA6ICIyLjEuMiIKfQ==',
+	// 		'Connection':'keep-alive',
+	// 		'version':'iOS 3.4.3',
+	// 		'Cookie':'_ga=GA1.2.1250726265.1458288776; click=1475275893-bfe199e2ce7ab894fa5b; city=90%7c%e6%b5%99%e6%b1%9f%e7%9c%81%7c1%7c3%7c%e6%9d%ad%e5%b7%9e%e5%b8%82%7c1'
+	// 	  } 
+	// 	};
+
+	// 	console.log(url_all_shop);
+	// 	request(options,function (error, response, body) {
+	// 	  	if (!error && response.statusCode == 200) {
+	// 			console.log(body)  
+	// 		    var data = JSON.parse(body);
+				
+
+
+	// 			sleep.sleep(3);//睡3秒
+	// 			console.log('===>>>第'+item+'页抓取完成');
+	// 			callback(null,item);   
+	// 		} else {
+	// 			faile_arr.push(url_all_shop);
+	// 			callback('ERROR:' + item +'页抓取失败');
+	// 		}
+			
+	// 	});    
+	// },function(err,result){
+	// 	callback();
+	// });		
+}
+
+
+
+fetch_all_shops(function(){
+	console.log('全部获取完成');
+});
+
+
+exports.fetch_all_shops = fetch_all_shops;
 
 function fetch_shop_info(callback){
 	console.log('fetch_shop_info');
 //南京市
 	async.waterfall([
 		function(done){
-			dbutil.queryData('tbl_tuhu_shops',{Province:'上海市'},function(err,result){
+			dbutil.queryData('tbl_tuhu_shops',{City:'成都市'},function(err,result){
 				var shop_info_urls = [];
 				console.log('query shops' + result);
 				result.forEach(function(item){
@@ -165,6 +249,7 @@ function fetch_shop_info(callback){
 					    	MR:MRs,
 					    	FW:FWs
 					    });
+					    sleep.sleep(2);
 					    callback(null,{
 					    	TR:TRs,
 					    	BY:BYs,
@@ -400,6 +485,7 @@ function fetch_shops (area,callback){
 			console.log('=================');
 			async.eachSeries(urls,function(item,callback){
 				fetch_shop_data(item,function(){
+					sleep.sleep(3);
 					callback();
 					console.log(item+'已经完成');
 					LogFile.log(item+'已经完成');
@@ -414,7 +500,7 @@ function fetch_shops (area,callback){
 		LogFile.info('=================>>>>>\n\r'+shops);
 
 		console.log('全部完成');
-		dbutil.saveMany(shops,'tbl_tuhu_shops',function(result){
+		dbutil.saveMany(shops,'tbl_tuhu_all_shops',function(result){
 	        console.log('all save done');
 	        LogFile.info(area + '店铺保存成功');
 	        shops = [];
