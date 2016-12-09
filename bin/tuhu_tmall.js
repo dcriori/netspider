@@ -9,6 +9,7 @@ var async = require('async');
 var redis = require('redis');
 var fs = require('fs');
 var sleep = require('sleep');
+var proxy = require('./proxy.json');
 
 charset(superagent);
 
@@ -51,18 +52,24 @@ function fetch_data(callback){
 					products.push(final_data);
 
 			    });
-			    sleep.sleep(10);
+			    sleep.sleep(20);
 			    done();
 		    }
 		});
 	},function(err,result){
 		console.log('共多少商品'+products.length);
 		var sum = 0;
+		var order_sum = 0;
+
 		products.forEach(function(item){
 			var money = parseFloat(item.price) * parseInt(item.number);
+			order_sum += parseInt(item.number);
 			console.log(item.price + '*' + item.price +'='+money);
 			sum += money;
 			console.log('途虎近30天天猫销售总额为：'+sum);
+			var average_price = sum/order_sum;
+			console.log('总单量：'+ order_sum);
+			console.log('平均单价：' + average_price);
 		});
 	});
 }

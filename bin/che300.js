@@ -10,8 +10,8 @@ var dbutil = require('./dbutil.js');
 var async = require('async');
 var URL = require('url');
 var cacheutil = require('./cacheutil');
-
 var redis = require('redis');
+
 var client = redis.createClient();
 
 //url config

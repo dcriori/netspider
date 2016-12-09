@@ -1,0 +1,42 @@
+{
+	"querys":[
+		{"City":"杭州市"},
+		{"City":"广州市"},
+		{"City":"深圳市"},	
+		{"City":"南京市"},
+		{"City":"武汉市"},
+		{"City":"成都市"},
+		{"Province":"北京市"},
+		{"Province":"上海市"}
+	],
+	"areas":
+	[
+		{"serviceType":"0","cityId":"1","city":"上海市","province":"上海市","pids":""},
+		{"serviceType":"0","cityId":"2","city":"北京市","province":"北京市","pids":""},
+		{"serviceType":"0","cityId":"3","city":"杭州市","province":"浙江省","pids":""},
+		{"serviceType":"0","cityId":"4","city":"南京市","province":"江苏省","pids":""},
+		{"serviceType":"0","cityId":"5","city":"深圳市","province":"广东省","pids":""},
+		{"serviceType":"0","cityId":"6","city":"宁波市","province":"浙江省","pids":""},
+		{"serviceType":"0","cityId":"7","city":"广州市","province":"广东省","pids":""},
+		{"serviceType":"0","cityId":"8","city":"苏州市","province":"江苏省","pids":""},
+		{"serviceType":"0","cityId":"9","city":"成都市","province":"四川省","pids":""},
+		{"serviceType":"0","cityId":"10","city":"无锡市","province":"江苏省","pids":""},
+		{"serviceType":"0","cityId":"12","city":"沈阳市","province":"辽宁省","pids":""},
+		{"serviceType":"0","cityId":"13","city":"郑州市","province":"河南省","pids":""},
+		{"serviceType":"0","cityId":"14","city":"长沙市","province":"湖南省","pids":""},
+		{"serviceType":"0","cityId":"16","city":"合肥市","province":"安徽省","pids":""},
+		{"serviceType":"0","cityId":"17","city":"武汉市","province":"湖北省","pids":""},
+		{"serviceType":"0","cityId":"19","city":"天津市","province":"天津市","pids":""},
+		{"serviceType":"0","cityId":"20","city":"重庆市","province":"重庆市","pids":""},
+		{"serviceType":"0","cityId":"99","city":"廊坊市","province":"河北省","pids":""},
+		{"serviceType":"0","cityId":"408","city":"大连市","province":"辽宁省","pids":""},
+		{"serviceType":"0","cityId":"722","city":"常州市","province":"江苏省","pids":""},
+		{"serviceType":"0","cityId":"834","city":"嘉兴市","province":"浙江省","pids":""},
+		{"serviceType":"0","cityId":"1183","city":"厦门市","province":"福建省","pids":""},
+		{"serviceType":"0","cityId":"1387","city":"济南市","province":"山东省","pids":""},
+		{"serviceType":"0","cityId":"1388","city":"青岛市","province":"山东省","pids":""},
+		{"serviceType":"0","cityId":"1859","city":"佛山市","province":"广东省","pids":""},
+		{"serviceType":"0","cityId":"3138","city":"西安市","province":"陕西省","pids":""}
+	]
+}
+

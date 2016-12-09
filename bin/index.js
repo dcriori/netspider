@@ -15,6 +15,7 @@ program
 if(!program.args.length) {
     program.help();
 } else {
+
     var keywords = program.args;
     // var url = 'https://api.github.com/search/repositories?sort=stars&order=desc&q='+keywords;
     console.log('keywords url: '+ keywords);
@@ -29,8 +30,14 @@ if(!program.args.length) {
         che300();
     } else if(keywords == 'tuhu'){
         tuhu();
+    } else if(keywords == 'dsrw') {
+        console.log('开启定时任务');
+        var j = schedule.scheduleJob('0 30 7 * * *', function(){
+          console.log('The answer to life, the universe, and everything!');
+          tuhu();
+        });
     } else {
-        console.log('你要干什么?！');
+
     }
 }
 
@@ -38,18 +45,33 @@ function tuhu() {
     var tuhu = require('./tuhu');
     // tuhu.fetch_hot_shops(function(){
     //     console.log('FETCH_SHOPS COMMPLETE!!!');
+        // dbutil.drain();
+        // process.exit(1);
     // });
 
-    tuhu.fetch_all_shops(function(){
-        console.log('FETCH_SHOPS COMMPLETE!!!');
+    // tuhu.fetch_all_shops(function(){
+    //     console.log('FETCH_SHOPS COMMPLETE!!!');
+    // });
+
+    // tuhu.fetch_shop_info2(function(){
+    //     console.log('hahaha');
+    // });
+
+    tuhu.fetch_shop_info3(function(){
+        console.log('hahaha');
     });
 
-    // tuhu.fetch_shop_info(function(){
-    //     console.log('hahaha');
-    //     dbutil.drain();
-    //     process.exit(1);
+    //获取各种服务类型
+    // tuhu.fetch_shop_property(function(err,result){
+    //     console.log('fetch shop property!!!');
     // });
 
+    //获取城市，区域等信息
+    // tuhu.fetch_city_areas(function(err,result){
+
+    //     console.log('fetch city areas!!!');
+
+    // });
 
 }
 
