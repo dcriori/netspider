@@ -52,7 +52,7 @@ function fetch_data(callback){
 					products.push(final_data);
 
 			    });
-			    sleep.sleep(20);
+			    sleep.sleep(30);
 			    done();
 		    }
 		});

@@ -53,13 +53,13 @@ function tuhu() {
     //     console.log('FETCH_SHOPS COMMPLETE!!!');
     // });
 
-    // tuhu.fetch_shop_info2(function(){
-    //     console.log('hahaha');
-    // });
-
-    tuhu.fetch_shop_info3(function(){
+    tuhu.fetch_shop_info2(function(){
         console.log('hahaha');
     });
+
+    // tuhu.fetch_shop_info3(function(){
+    //     console.log('hahaha');
+    // });
 
     //获取各种服务类型
     // tuhu.fetch_shop_property(function(err,result){
