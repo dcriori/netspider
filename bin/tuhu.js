@@ -18,22 +18,16 @@ var url_shop_service = host + 'Shops/SelectServicesByShopId?shopId=7277&serviceT
 var url_area_list = host + '/Shops/SelectShopListArea?serviceType=0&cityId={cityId}&city={city}&province={province}&pids=';
 
 var shops = [];
+var exist_shop_ids = [];
 var citys = [];
 
 var querys = citys_config.querys;
 var areas = citys_config.areas;
 
-function fetch_all_shops(callback){
-	async.mapSeries([{
-	serviceType:'0',
-	pageIndex:'1',
-	district:'',
-	city:'',
-	province:'',
-	lat:'29.570997',
-	lng:'106.557165'
-}],function(area,done){
+exports.fetch_hot_shops = function(callback){
+	async.mapSeries(citys,function(area,done){
 		console.log('>>>>>>>>>>>>>>>>>>'+area);
+		LogFile.info('>>>>>>>>>>>>>>>>>>'+ JSON.stringify(area));
 		fetch_shops(area,function(){
 
 			done(null,area.city);
@@ -41,6 +35,23 @@ function fetch_all_shops(callback){
 		});
 	},function(err,result){
 
+		callback();
+
+	});
+}
+
+//
+function fetch_all_shops(areas,callback){
+	async.mapSeries(areas,function(area,done){
+		console.log('>>>>>>>>>>>>>>>>>>\n>>>>>>>正在爬取'+ area.city+'\n>>>>>>>>>>>>>>>>>>');
+		fetch_shops(area,function(){
+
+			done(null,area.city);
+
+		});
+	},function(err,result){
+
+		console.log(result);
 		callback();
 
 	});	
@@ -51,17 +62,17 @@ exports.fetch_all_shops = fetch_all_shops;
 function fetch_shop_info2(callback){
 	console.log('citys : ' + citys);
 	console.log('querys : ' + querys);
-
+// 
 	async.mapSeries(querys,function(item,callback){
 
-		console.log(item);
+		// console.log(item);
 
 		fetch_shop_info(item,function(){
 			callback(null,item);
 		});
 
 	},function(err,result){
-		console.log(result);
+		// console.log(result);
 		callback();
 	});
 
@@ -72,7 +83,24 @@ exports.fetch_shop_info2 = fetch_shop_info2;
 
 function fetch_shop_info3(callback) {
 	async.waterfall([
+			function(done) {
+				exist_shop_ids = [];
+
+				dbutil.queryData('tbl_tuhu_all_shops2',{},function(err, shop_result){
+
+					console.log('query shops' + shop_result);
+					
+					shop_result.forEach(function(shop){
+						exist_shop_ids.push(shop.ShopId);
+					});
+					
+					done();
+
+				});
+			},
 			function(done){
+				shops = [];
+
 				//把areas里的数据都取出来
 				dbutil.queryData('tbl_tuhu_areas',{},function(err, areas_result){
 
@@ -95,16 +123,19 @@ function fetch_shop_info3(callback) {
 					done(null,citys);
 
 				});
+
 			},
 			function(citys,done){
-
 				console.log(citys);
-				
-			},
-			function(urls,done){
 
+				fetch_all_shops(citys,function(){
+					done(null,citys);
+				});
 			}
-		])
+		],function(err,result){
+			console.log('fetch_shop_info3 complete');
+			callback();
+		})
 
 }
 
@@ -114,7 +145,7 @@ function fetch_shop_info(query, callback){
 
 	async.waterfall([
 		function(done){
-			dbutil.queryData('tbl_tuhu_shops',query,function(err,result){ //
+			dbutil.queryData('tbl_tuhu_all_shops2',query,function(err,result){ //
 				var shop_info_urls = [];
 				console.log('query shops' + result);
 				result.forEach(function(item){
@@ -151,7 +182,6 @@ function fetch_shop_info(query, callback){
 					'Cookie':'_ga=GA1.2.1250726265.1458288776; click=1475275893-bfe199e2ce7ab894fa5b; city=90%7c%e6%b5%99%e6%b1%9f%e7%9c%81%7c1%7c3%7c%e6%9d%ad%e5%b7%9e%e5%b8%82%7c1'
 				  }
 				};
-
 				//获取Shop Property
 				console.log(url);
 				request(options,function (error, response, body) {
@@ -249,22 +279,7 @@ function fetch_shop_property(callback){
 
 	request(options,function (error, response, body) {
 	  if (!error && response.statusCode == 200) {
-	    // console.log(body)  
-	    // switch (response.headers['content-encoding']) {
-	    //     // or, just use zlib.createUnzip() to handle both cases
-	    //     case 'gzip':
-	    //           response.pipe(zlib.createGunzip()).pipe(output);
-	    //           break;
-	    //     case 'deflate':
-	    //           response.pipe(zlib.createInflate()).pipe(output);
-	    //           break;
-	    //     default:
-	    //           response.pipe(output);
-	    //           break;
-	    //   }
-
 	    var data = JSON.parse(body);
-
 	    var beautify = data.Beautify;
 	    var server = data.Server;
 	    var brands = data.Brands;
@@ -297,6 +312,7 @@ pids=FU-CARWASHING-XICHE%7C1
 shopClassification=
 */
 
+//取第一个URL里的数据
 function fetch_first_shops(area,callback){
 	var url_shops = host + '/Shops/SelectShopList?&serviceType={serviceType}&pageIndex={pageIndex}&sort=HuShi&pids=FU-CARWASHING-XICHE%7C1&district={district}&shopClassification=&City={city}&Province={province}&LatBegin={latitude}&LngBegin={longitude}';
 	var url = url_shops.replace('{serviceType}',area.serviceType)
@@ -333,20 +349,28 @@ function fetch_first_shops(area,callback){
 
 	request(options,function (error, response, body) {
 	  if (!error && response.statusCode == 200) {
-	    // console.log(body)  
 	    var data = JSON.parse(body);
 	    var total_page = data.TotalPage;
 	    console.log('TotalPage:' + total_page);
 	    var data = JSON.parse(body);
 	    var data_shops = data.Shops;
 	    data_shops.forEach(function(item){
-	    	shops.push(item);
+	    	console.log('##########'+exist_shop_ids.indexOf(item.ShopId));
+	    	if(exist_shop_ids.indexOf(item.ShopId) == -1) {
+	    		console.log('##########'+item.ShopId);
+	    		shops.push(item);
+	    		exist_shop_ids.push(item.ShopId);
+	    	} else {
+	    		console.log('ID:'+item.ShopId + '已经存在');
+	    	}
 	    });
+
 	    callback(total_page);
 	  }
 	});
 }
 
+//取每一个URL里的数据
 function fetch_shop_data(url,callback){
 	var options = {
 	  url: url,
@@ -371,31 +395,21 @@ function fetch_shop_data(url,callback){
 
 	request(options,function (error, response, body) {
 	  if (!error && response.statusCode == 200) {
-	    console.log(body)  
+	    // console.log(body)  
 	    var data = JSON.parse(body);
 	    var data_shops = data.Shops;
 	    data_shops.forEach(function(item){
-	    	shops.push(item);
+	    	console.log('##########'+exist_shop_ids.indexOf(item.ShopId));
+	    	if(exist_shop_ids.indexOf(item.ShopId) == -1) {
+	    		console.log('##########'+item.ShopId);
+	    		shops.push(item);
+	    		exist_shop_ids.push(item.ShopId);
+	    	} else {
+	    		console.log('ID:'+item.ShopId + '已经存在');
+	    	}
 	    });
 	    callback();
 	  }
-	});
-}
-
-
-exports.fetch_hot_shops = function(callback){
-	async.mapSeries(citys,function(area,done){
-		console.log('>>>>>>>>>>>>>>>>>>'+area);
-		LogFile.info('>>>>>>>>>>>>>>>>>>'+ JSON.stringify(area));
-		fetch_shops(area,function(){
-
-			done(null,area.city);
-
-		});
-	},function(err,result){
-
-		callback();
-
 	});
 }
 
@@ -479,7 +493,7 @@ function fetch_shops (area,callback){
 	async.waterfall([
 		function(done){
 			fetch_first_shops(area,function(result){
-				console.log('done');
+				console.log('fetch_first_shops done');
 				
 				LogFile.info('fetch_first_shops complete area:' + area);
 
@@ -498,11 +512,10 @@ function fetch_shops (area,callback){
 
 			console.log('=================');
 			async.eachSeries(urls,function(item,callback){
+				console.log('正在处理'+item);
 				fetch_shop_data(item,function(){
-					sleep.sleep(3);
+					sleep.sleep(2);
 					callback();
-					console.log(item+'已经完成');
-					LogFile.log(item+'已经完成');
 				});
 			}, function(err,result){
 				console.log('全部URL完成');
@@ -513,12 +526,16 @@ function fetch_shops (area,callback){
 		console.log('=================>>>>>\n\r'+shops);
 		LogFile.info('=================>>>>>\n\r'+shops);
 		console.log('全部完成');
-		dbutil.saveMany(shops,'tbl_tuhu_all_shops',function(result){
-	        console.log('all save done');
-	        LogFile.info(area + '店铺保存成功');
-	        shops = [];
-	        callback();
-	    });	
+		if (shops.length > 0) {
+			dbutil.saveMany(shops,'tbl_tuhu_all_shops2',function(result){
+		        console.log('all save done');
+		        LogFile.info(area + '店铺保存成功');
+		        shops = [];
+		        callback();
+		    });	
+	    } else {
+	    	callback();
+	    }
 	});
 };
 

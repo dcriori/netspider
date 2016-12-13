@@ -6,6 +6,7 @@ var dbutil = require('./dbutil.js');
 var log = require('./logutil.js');
 var schedule = require('node-schedule');
 var async = require('async');
+var tuhu = require('./tuhu');
 
 program
     .version('1.0.0')
@@ -32,9 +33,11 @@ if(!program.args.length) {
         tuhu();
     } else if(keywords == 'dsrw') {
         console.log('开启定时任务');
-        var j = schedule.scheduleJob('0 30 7 * * *', function(){
-          console.log('The answer to life, the universe, and everything!');
-          tuhu();
+        var j = schedule.scheduleJob('0 5 7,18 * * *', function(){
+            console.log('The answer to life, the universe, and everything!');
+                tuhu.fetch_shop_info2(function(){
+                    console.log('hahaha');
+                });
         });
     } else {
 
@@ -42,7 +45,7 @@ if(!program.args.length) {
 }
 
 function tuhu() {
-    var tuhu = require('./tuhu');
+
     // tuhu.fetch_hot_shops(function(){
     //     console.log('FETCH_SHOPS COMMPLETE!!!');
         // dbutil.drain();
@@ -56,10 +59,6 @@ function tuhu() {
     tuhu.fetch_shop_info2(function(){
         console.log('hahaha');
     });
-
-    // tuhu.fetch_shop_info3(function(){
-    //     console.log('hahaha');
-    // });
 
     //获取各种服务类型
     // tuhu.fetch_shop_property(function(err,result){
