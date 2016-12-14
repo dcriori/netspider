@@ -119,6 +119,8 @@ function fetch_shop_info3(callback) {
 							});
 						});
 					});
+
+
 					
 					done(null,citys);
 
@@ -187,6 +189,9 @@ function fetch_shop_info(query, callback){
 				request(options,function (error, response, body) {
 				  if (!error && response.statusCode == 200) {
 				    console.log(body)  
+				    
+				    LogFile.error(body);
+
 				    var data = JSON.parse(body);
 				    var code = data.Code;
 				    if (code == 1) {
@@ -237,8 +242,14 @@ function fetch_shop_info(query, callback){
 				    }
 				});    
 			},function(err,result){
-				LogFile.info(query.City + '：'+ JSON.stringify(_.last(result)));
-				done(null,query.City + '：'+ JSON.stringify(_.last(result)));
+				var cityName = '';
+				if (query.City == undefined) {
+					cityName = query.Province;
+				} else {
+					cityName = query.City;
+				}
+				LogFile.info(cityName + '：'+ JSON.stringify(_.last(result)));
+				done(null,cityName + '：'+ JSON.stringify(_.last(result)));
 
 			});
 		}

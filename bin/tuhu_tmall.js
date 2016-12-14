@@ -9,11 +9,11 @@ var async = require('async');
 var redis = require('redis');
 var fs = require('fs');
 var sleep = require('sleep');
-var proxy = require('./proxy.json');
+// var proxy = require('./proxy.json');
 
 charset(superagent);
 
-function fetch_data(callback){
+function fetch_tmall_data(callback){
 	var products = [];
 	async.mapSeries([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],function(item,done){
 		var pageSize = item * 60;
@@ -54,6 +54,7 @@ function fetch_data(callback){
 			    });
 			    sleep.sleep(30);
 			    done();
+			    
 		    }
 		});
 	},function(err,result){
@@ -61,18 +62,28 @@ function fetch_data(callback){
 		var sum = 0;
 		var order_sum = 0;
 
+		dbutil.saveMany(products,'tbl_tuhu_tmall',function(result){
+	        console.log('all save done');
+	    });
+
 		products.forEach(function(item){
-			var money = parseFloat(item.price) * parseInt(item.number);
-			order_sum += parseInt(item.number);
-			console.log(item.price + '*' + item.price +'='+money);
-			sum += money;
-			console.log('途虎近30天天猫销售总额为：'+sum);
-			var average_price = sum/order_sum;
-			console.log('总单量：'+ order_sum);
-			console.log('平均单价：' + average_price);
+			fs.appendFile('/Users/sagaris/tuhu_tmall_data.txt',item,function (err) {
+				console.log('save file complete!!!');
+			});
+			// var money = parseFloat(item.price) * parseInt(item.number);
+			// order_sum += parseInt(item.number);
+			// console.log(item.price + '*' + item.price +'='+money);
+			// sum += money;
+			// console.log('途虎近30天天猫销售总额为：'+sum);
+			// var average_price = sum/order_sum;
+			// console.log('总单量：'+ order_sum);
+			// console.log('平均单价：' + average_price);
 		});
 	});
 }
+
+exports.fetch_tmall_data = fetch_tmall_data;
+
 
 function jiexi_data(data){
 	console.log('#######.'+data);
@@ -103,9 +114,9 @@ function jiexi_data(data){
 	};
 }
 
-fetch_data(function(){
+// fetch_data(function(){
 	
-});
+// });
 
 
 function fetch_test_data(dataFile,callback) {
