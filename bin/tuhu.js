@@ -189,18 +189,12 @@ function fetch_shop_info(query, callback){
 				request(options,function (error, response, body) {
 				  if (!error && response.statusCode == 200) {
 				    console.log(body)  
-				    
-				    LogFile.error(body);
-
 				    var data = JSON.parse(body);
 				    var code = data.Code;
 				    if (code == 1) {
 				    	var shopDetail = data.ShopDetail;
 					    var statisticses = shopDetail.Statisticses;
-
-					    console.log('>>>>>>'+statisticses);
 					    
-
 					    if (statisticses.length != 0) {
 					    	statisticses.forEach(function(item){
 						    	if (item.Type == 'TR') {
@@ -239,6 +233,14 @@ function fetch_shop_info(query, callback){
 					    	FW:0
 					    });
 					  }
+				    }else {
+				    	LogFile.error(body);
+				    	callback(null,{
+					    	TR:0,
+					    	BY:0,
+					    	MR:0,
+					    	FW:0
+					    });
 				    }
 				});    
 			},function(err,result){
