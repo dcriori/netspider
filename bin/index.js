@@ -37,7 +37,7 @@ if(!program.args.length) {
         });
     } else if(keywords == 'dsrw') {
         console.log('开启定时任务');
-        var j = schedule.scheduleJob('0 5 7,18 * * *', function(){
+        var j = schedule.scheduleJob('0 30 7,18 * * *', function(){
             console.log('The answer to life, the universe, and everything!');
             tuhu.fetch_shop_info2(function(){
                 console.log('hahaha');
@@ -46,7 +46,7 @@ if(!program.args.length) {
     } else if(keywords == 'tmall'){
         tuhu_tmall.fetch_tmall_data(function(){
             console.log('fetch tuhu tmall data');
-            
+
         });
     } else {
 
