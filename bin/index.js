@@ -38,9 +38,9 @@ if(!program.args.length) {
     } else if(keywords == 'dsrw') {
         console.log('开启定时任务');
         var j = schedule.scheduleJob('0 23 7,15 * * *', function(){
-            console.log('The answer to life, the universe, and everything!');
+            console.log('执行定时任务，获取店铺详细信息！');
             tuhu.fetch_app_shopinfo(function(){
-                console.log('hahaha');
+                console.log('定时任务完成！');
             });
         });
     } else if(keywords == 'tmall'){

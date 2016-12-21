@@ -87,8 +87,8 @@ function fetch_app_shopinfo(callback){
 		console.log(JSON.stringify(result));
 		LogFile.info(JSON.stringify(result));
 		callback();
+		
 	});
-
 }
 
 exports.fetch_app_shopinfo = fetch_app_shopinfo;
@@ -571,7 +571,6 @@ function fetch_city_shops(callback) {
 						});
 					});
 					done(null,citys);
-
 				});
 
 			},
