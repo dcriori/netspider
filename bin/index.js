@@ -32,28 +32,39 @@ if(!program.args.length) {
     if (keywords == 'che300') {
         che300();
     } else if(keywords == 'tuhu'){
-        tuhu.fetch_shop_info2(function(){
+        tuhu.fetch_app_shopinfo(function(){
             console.log('hahaha');
         });
     } else if(keywords == 'dsrw') {
         console.log('开启定时任务');
-        var j = schedule.scheduleJob('0 30 7,18 * * *', function(){
+        var j = schedule.scheduleJob('0 23 7,15 * * *', function(){
             console.log('The answer to life, the universe, and everything!');
-            tuhu.fetch_shop_info2(function(){
+            tuhu.fetch_app_shopinfo(function(){
                 console.log('hahaha');
             });
         });
     } else if(keywords == 'tmall'){
         tuhu_tmall.fetch_tmall_data(function(){
             console.log('fetch tuhu tmall data');
+        });
+    } else if(keywords == 'tuhu_shop'){
+        var j = schedule.scheduleJob('0 3 17 * * *', function(){
+
+            tuhu.fetch_city_shops(function(){
+                console.log('fetch_city_shops complete');
+            });
 
         });
     } else {
-
+        console.log('你想做什么？');
     }
 }
 
 function tuhu() {
+
+    tuhu_tmall.fetch_tmall_data(function(){
+        console.log('fetch tuhu tmall data');
+    });
 
     // tuhu.fetch_hot_shops(function(){
     //     console.log('FETCH_SHOPS COMMPLETE!!!');
@@ -65,9 +76,9 @@ function tuhu() {
     //     console.log('FETCH_SHOPS COMMPLETE!!!');
     // });
 
-    tuhu.fetch_shop_info2(function(){
-        console.log('hahaha');
-    });
+    // tuhu.fetch_app_shopinfo(function(){
+    //     console.log('hahaha');
+    // });
 
     //获取各种服务类型
     // tuhu.fetch_shop_property(function(err,result){

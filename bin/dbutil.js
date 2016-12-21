@@ -83,7 +83,8 @@ DBUtil.prototype.dropTable = function(table_name){
 			console.error(JSON.stringify(err,null,2));
 		}else{
 			db.collection(table_name, function(err, collection) {                                      
-		    	collection.remove();                 
+		    	collection.remove(); 
+		    	DB_POOL.release(db);//关闭连接                
 			});
 		}
 	});
@@ -98,6 +99,7 @@ DBUtil.prototype.queryData = function(table_name,query,callback){
 			collection.find(query).toArray(function(err,result){
 				if(err){callback(err,null);}
 				callback(null,result);
+				DB_POOL.release(db);//关闭连接
 			});
 		}
 	});
