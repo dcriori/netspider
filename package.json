@@ -1,6 +1,6 @@
 {
   "name": "netspider",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "a net spider fetch second hands car info from net site",
   "main": "index.js",
   "bin": {
